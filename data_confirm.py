@@ -1,24 +1,11 @@
 # 実装時の挙動確認用
 import numpy as np
-import pickle
-from google.colab.patches import cv2_imshow
 import cv2
-
-def pickle_show(save_file, index):
-    with open(save_file, mode="rb") as f:
-        hoge = pickle.load(f)
-        label = hoge[index][0]
-        im_array = hoge[index][1]
-
-        print(label)
-        cv2_imshow(im_array)
+from google.colab.patches import cv2_imshow
 
 
 demo_paths = [
-'/content/sample_data/ETL8B/emata_netsu.PNG',
-'/content/sample_data/ETL8B/emata_imouto.png',
-'/content/sample_data/ETL8B/emata_da.png',
-'/content/sample_data/ETL8B/emata_yoko.png'
+    '/content/emata_a.png'
 ]
 
 class UseModel:
@@ -27,7 +14,9 @@ class UseModel:
         self.im_size = im_size
         self.im_color = im_color
 
-    def reshape(self, path):
+    def format_img(self, path):
+        # print('path', path)
+        print('path', path)
         img = cv2.imread(path)
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img = cv2.resize(img_gray, (self.im_size, self.im_size))
@@ -36,8 +25,13 @@ class UseModel:
         return img
 
     def predict(self, paths=demo_paths):
-        imgs = [self.reshape(path) for path in paths]
+        print(paths)
+        imgs = [self.format_img(path) for path in paths if type(path) != 'str' or path is not None]
+        # cv2_imshow(imgs[0])
         np_imgs = np.array(imgs)
-
         predictions = self.model.predict(np_imgs)
-        [prd.argmax() for prd in predictions]
+        return [prd.argmax() for prd in predictions]
+
+model_handler = UseModel(model)
+predictions = model_handler.predict()
+print(predictions)
