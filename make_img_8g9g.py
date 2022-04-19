@@ -1,36 +1,46 @@
-# Based on: https://qiita.com/Cyber_Hacnosuke/items/c121cfd1945a3174bc84
+# Based on: https://qiita.com/kcrt/items/a7f0582a91d6599d164d
 
-import cv2
-import glob
-import pickle
+
+#!/usr/bin/env python3
+
+import struct
+import numpy as np
 import os
-from google.colab.patches import cv2_imshow
+from PIL import Image
+
 
 ETL_TYPE = 'ETL8G'
-IM_DIR = f"/content/sample_data/{ETL_TYPE}"
-IM_SIZE = 32
-SAVE_FILE = IM_DIR + f"/{ETL_TYPE}.pickle"
+IMG_DIR = f"/content/sample_data/{ETL_TYPE}/img"
+SOURCE_DIR = f"/content/sample_data/{ETL_TYPE}/source"
+# SOURCE_DIR = f"dataset/{ETL_TYPE}/source"
+RECORD_SIZE = 8199
+FILE_CNT = 33
 
-def im_formatter(file_path):
-  img = cv2.imread(file_path)
-  img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  img = cv2.resize(img_gray, (IM_SIZE, IM_SIZE))
-  return img
-
-def get_file_paths(dir_name):
-  dir_path = f'{IM_DIR}/{dir_name}'
-  return glob.glob(dir_path + "/*")
-
-result = []
-dir_names = os.listdir(IM_DIR)
-dir_names = [name for name in dir_names if len(name)==1]
-for i, dir_name in enumerate(dir_names):
-  # print('############################################')
-  # print(f'dir_name: {dir_name}, #{i}')
-  file_paths = get_file_paths(dir_name)
-  for file_path in file_paths:
-    img = im_formatter(file_path)
-    # cv2_imshow(img)
-    result.append([i, img])
-
-pickle.dump(result, open(SAVE_FILE, "wb"))
+for cnt in range(2, FILE_CNT):
+    if cnt + 1 < 10:
+        cnt_str = f'0{cnt+1}'
+    else:
+        cnt_str = str(cnt+1)
+    file_name = f'{ETL_TYPE}_{cnt_str}'
+    file_path = f'{SOURCE_DIR}/{file_name}'
+    i = 0
+    print("Reading {}".format(file_path))
+    with open(file_path, 'rb') as f:
+        while True:
+            s = f.read(RECORD_SIZE)
+            if s is None or len(s) < RECORD_SIZE:
+                break
+            r = struct.unpack(">HH8sIBBBBHHHHBB30x8128s11x", s)
+            img = Image.frombytes('F', (128, 127), r[14], 'bit', (4, 0))
+            img = img.convert('L')
+            img = img.point(lambda x: 255 - (x << 4))
+            i = i + 1
+            dirname = b'\x1b$B' + r[1].to_bytes(2, 'big') + b'\x1b(B'
+            dirname = dirname.decode("iso-2022-jp")
+            try:
+                os.makedirs(IMG_DIR)
+            except:
+                pass
+            imagefile = f"{IMG_DIR}/{file_name}_{i:0>6}.png"
+            print(imagefile)
+            img.save(imagefile)
