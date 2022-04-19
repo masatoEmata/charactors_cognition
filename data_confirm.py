@@ -1,9 +1,5 @@
 # 実装時の挙動確認用
-
-from importlib.resources import path
-from statistics import mode
 import numpy as np
-from PIL import Image
 import pickle
 from google.colab.patches import cv2_imshow
 import cv2
