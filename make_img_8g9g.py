@@ -37,13 +37,16 @@ def save_image_file(img, dirname):
     imagefile = f"{IM_DIR}/{dirname}/{file_name}_{i:0>6}.png"
     img.save(imagefile)
 
-for i, cnt in enumerate(range(FILE_CNT)):
-    img_class_i = cnt + 1
-    if img_class_i < 10:
-        cnt_str = f'0{img_class_i}'
+def make_img_class_str(index):
+    class_index = index + 1
+    if class_index < 10:
+        return f'0{class_index}'
     else:
-        cnt_str = str(img_class_i)
-    file_name = f'{ETL_TYPE}_{cnt_str}'
+        return str(class_index)
+
+for cnt in range(FILE_CNT):
+    class_index = make_img_class_str(cnt)
+    file_name = f'{ETL_TYPE}_{class_index}'
     file_path = f'{SOURCE_DIR}/{file_name}'
     with open(file_path, 'rb') as f:
         while True:
